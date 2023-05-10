@@ -1,0 +1,58 @@
+library(shiny)
+library(ggplot2)
+library(ca)
+library(FactoMineR)
+library(factoextra)
+
+
+pca_result <- prcomp(iris[,1:4], center = TRUE, scale. = TRUE)
+pca_df <- data.frame(Species = iris$Species, pca_result$x)
+# Define UI for app that draws a histogram ----
+ui <- fluidPage(
+  
+  titlePanel("NCCU_DS2023_hw4_111971023"),
+  tabsetPanel(
+    tabPanel("PCA",
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput("x_axis", "X軸座標：", choices = colnames(pca_df)[-1], selected = "PC1"),
+                 selectInput("y_axis", "Y軸座標：", choices = colnames(pca_df)[-1], selected = "PC2")
+               ),
+               mainPanel(
+                 plotOutput("scatterplot")
+               )      
+             )
+    ),
+    tabPanel("CA",
+             sidebarLayout(
+               sidebarPanel(),
+               mainPanel(
+                 plotOutput("caPlot")
+               )      
+             )
+    )
+  )
+  # App title ----
+)
+
+# Define server logic required to draw a histogram ----
+server <- function(input, output) {
+  
+  output$scatterplot <- renderPlot({
+    ggplot(pca_df, aes_string(x = input$x_axis, y = input$y_axis, color = "Species")) + 
+      geom_point() +
+      labs(x = input$x_axis, y = input$y_axis, title = "") +
+      theme_minimal()
+  })
+  
+  output$caPlot <- renderPlot({
+    
+    ca <- ca(iris[, -5])
+    
+    fviz_ca_biplot(ca, repel = TRUE)
+  })
+  
+}
+
+# Create Shiny app ----
+shinyApp(ui = ui, server = server)
